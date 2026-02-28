@@ -38,7 +38,7 @@ const Home = () => {
                 </div>
 
                 {/* Card 2: Cover Letter Generator */}
-                <div className="bg-slate-50 rounded-2xl p-8 shadow-sm border border-slate-200 transition-all duration-300 flex flex-col h-full opacity-80">
+                <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-slate-200 transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
                     <div className="w-14 h-14 bg-slate-200 rounded-xl flex items-center justify-center mb-6">
                         <PenTool className="w-7 h-7 text-slate-500" />
                     </div>
@@ -47,10 +47,11 @@ const Home = () => {
                         Generate customized cover letters tailored to specific job descriptions. Our AI crafts a persuasive narrative highlighting your unique strengths.
                     </p>
                     <button
-                        disabled
-                        className="w-full bg-slate-200 text-slate-400 font-medium py-3 px-6 rounded-lg cursor-not-allowed flex items-center justify-center gap-2"
+                        onClick={() => navigate('/cover-letter-generator')}
+                        className="w-full group bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
-                        Coming Soon
+                        Generate Cover Letter
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </div>

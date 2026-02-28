@@ -25,9 +25,9 @@ const Header = () => {
                 <nav className="hidden md:flex items-center gap-6 font-medium">
                     <Link to="/" className={isActive('/')}>Home</Link>
                     <Link to="/resume-builder" className={isActive('/resume-builder')}>AI Resume Builder</Link>
-                    <button disabled className="text-slate-400 cursor-not-allowed flex items-center gap-1" title="Coming Soon">
-                        <FileText className="w-4 h-4" /> Cover Letter Generator
-                    </button>
+                    <Link to="/cover-letter-generator" className={isActive('/cover-letter-generator')}>
+                        Cover Letter Generator
+                    </Link>
                 </nav>
 
                 {/* Mobile Nav Button (Could be expanded later) */}
