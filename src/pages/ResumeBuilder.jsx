@@ -34,17 +34,79 @@ const ResumeBuilder = () => {
         setExperience(experience.map(e => e.id === id ? { ...e, [field]: value } : e));
     };
 
-    const handleGenerate = () => {
+    const [errorMsg, setErrorMsg] = useState('');
+    const [generatedResume, setGeneratedResume] = useState(null);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleGenerate = async () => {
         setIsGenerating(true);
-        // Simulate AI processing time
-        setTimeout(() => {
-            setIsGenerating(false);
+        setErrorMsg('');
+        try {
+            const response = await fetch('http://localhost:8000/api/resume/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    personal_info: personalInfo,
+                    education: education,
+                    skills: skills,
+                    projects: projects,
+                    experience: experience,
+                }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Server error');
+            }
+
+            const data = await response.json();
+            setGeneratedResume(data.generated_resume);
+
             setShowPreview(true);
-            // Scroll to preview somewhat nicely
             setTimeout(() => {
                 document.getElementById('resume-preview')?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
-        }, 2000);
+        } catch (err) {
+            setErrorMsg(`Failed to generate resume preview: ${err.message}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        setIsDownloading(true);
+        setErrorMsg('');
+        try {
+            const response = await fetch('http://localhost:8000/api/resume/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    personal_info: personalInfo,
+                    education: education,
+                    skills: skills,
+                    projects: projects,
+                    experience: experience,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Server error');
+            }
+
+            const blob = await response.blob();
+            const fileUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = `Resume_${personalInfo.fullName.replace(/\s+/g, '_') || 'Generated'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            setErrorMsg(`Failed to download PDF: ${err.message}`);
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     return (
@@ -223,27 +285,49 @@ const ResumeBuilder = () => {
                         )}
                     </button>
                 </div>
+                {/* Error Banner */}
+                {errorMsg && (
+                    <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        ⚠️ {errorMsg}
+                    </div>
+                )}
             </div>
 
             {/* Resume Preview Section */}
-            {showPreview && (
+            {showPreview && generatedResume && (
                 <div id="resume-preview" className="mt-16 animate-in fade-in slide-in-from-bottom-8 duration-500">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-slate-800">Your Generated Resume</h2>
-                        <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-sm">
-                            <Download className="w-4 h-4" /> Download PDF
+                        <button
+                            onClick={handleDownloadPDF}
+                            disabled={!generatedResume || isDownloading}
+                            className={`flex items-center gap-2 font-medium py-2 px-4 rounded-md transition-colors shadow-sm ${(!generatedResume || isDownloading) ? 'bg-slate-400 cursor-not-allowed text-white' : 'bg-slate-800 hover:bg-slate-900 text-white'}`}
+                        >
+                            {isDownloading ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Generating PDF...
+                                </>
+                            ) : (
+                                <>
+                                    <Download className="w-4 h-4" /> Download PDF
+                                </>
+                            )}
                         </button>
                     </div>
 
-                    {/* Printable Resume Canvas */}
-                    <div className="bg-white p-10 md:p-14 rounded-lg shadow-xl border border-slate-200 aspect-[8.5/11] max-w-4xl mx-auto text-slate-800 font-sans">
+                    {/* Highly Styled Resume Preview */}
+                    <div className="bg-white p-10 md:p-14 rounded-lg shadow-xl border border-slate-200 w-full max-w-[850px] mx-auto text-slate-800 font-sans leading-relaxed">
 
-                        {/* Template Header */}
-                        <div className="text-center mb-8 border-b-2 border-slate-800 pb-6">
-                            <h1 className="text-4xl font-bold uppercase tracking-wide text-slate-900 mb-2">
-                                {personalInfo.fullName || 'John Doe'}
+                        {/* HEADER */}
+                        <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
+                            <h1 className="text-4xl font-bold uppercase tracking-widest text-slate-900 mb-2">
+                                {personalInfo.fullName || 'Your Name'}
                             </h1>
-                            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-slate-600">
+                            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-slate-600">
                                 {personalInfo.email && <span>{personalInfo.email}</span>}
                                 {(personalInfo.email && personalInfo.phone) && <span>|</span>}
                                 {personalInfo.phone && <span>{personalInfo.phone}</span>}
@@ -254,75 +338,85 @@ const ResumeBuilder = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-6">
-                            {/* Template Education */}
-                            {education.degree && (
+                        <div className="space-y-6 text-sm">
+                            {/* EDUCATION */}
+                            {(education.degree || education.university) && (
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider">Education</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider pb-1">Education</h3>
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="font-semibold text-slate-800">{education.university || 'University Name'}</p>
+                                            <p className="font-bold text-slate-800">{education.university || 'University Name'}</p>
                                             <p className="italic text-slate-600">{education.degree}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-medium text-slate-700">{education.gradYear}</p>
-                                            {education.cgpa && <p className="text-slate-600">CGPA: {education.cgpa}</p>}
+                                            <p className="font-bold text-slate-700">{education.gradYear}</p>
+                                            {education.cgpa && <p className="text-slate-600 text-xs mt-1">CGPA: {education.cgpa}</p>}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Template Skills */}
+                            {/* SKILLS */}
                             {skills && (
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider">Skills</h3>
-                                    <p className="text-slate-700 leading-relaxed max-w-full break-words">
+                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider pb-1">Technical Skills</h3>
+                                    <p className="text-slate-700 leading-relaxed break-words">
                                         {skills}
                                     </p>
                                 </div>
                             )}
 
-                            {/* Template Experience */}
+                            {/* EXPERIENCE */}
                             {experience.some(e => e.company || e.role) && (
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider">Experience</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider pb-1">Professional Experience</h3>
                                     <div className="space-y-4">
-                                        {experience.map(exp => (
-                                            <div key={`prev-exp-${exp.id}`}>
-                                                <div className="flex justify-between items-baseline mb-1">
-                                                    <p className="font-semibold text-slate-800">{exp.role || 'Role Title'}</p>
-                                                    <p className="text-sm font-medium text-slate-600">{exp.duration}</p>
+                                        {experience.map(exp => {
+                                            if (!exp.company && !exp.role) return null;
+                                            return (
+                                                <div key={`prev-exp-${exp.id}`}>
+                                                    <div className="flex justify-between items-baseline mb-1">
+                                                        <p className="font-bold text-slate-800">{exp.role || 'Role Title'}</p>
+                                                        <p className="font-bold text-slate-600">{exp.duration}</p>
+                                                    </div>
+                                                    <p className="text-slate-700 italic mb-2">{exp.company || 'Company Name'}</p>
+                                                    {exp.description && (
+                                                        <p className="text-slate-700 leading-relaxed whitespace-pre-line ml-4">
+                                                            {exp.description.split('\n').filter(b => b.trim()).map((b, i) => (
+                                                                <span key={i} className="block mb-1">• {b.replace(/^•\s*/, '')}</span>
+                                                            ))}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                <p className="text-slate-700 italic mb-2">{exp.company || 'Company Name'}</p>
-                                                {exp.description && (
-                                                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line ml-4 border-l-2 border-slate-200 pl-3">
-                                                        {exp.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Template Projects */}
+                            {/* PROJECTS */}
                             {projects.some(p => p.title) && (
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider">Projects</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 border-b border-slate-300 mb-3 uppercase tracking-wider pb-1">Projects</h3>
                                     <div className="space-y-4">
-                                        {projects.map(proj => (
-                                            <div key={`prev-proj-${proj.id}`}>
-                                                <div className="flex items-baseline gap-2 mb-1">
-                                                    <p className="font-semibold text-slate-800">{proj.title || 'Project Title'}</p>
-                                                    {proj.technologies && <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{proj.technologies}</span>}
+                                        {projects.map(proj => {
+                                            if (!proj.title) return null;
+                                            return (
+                                                <div key={`prev-proj-${proj.id}`}>
+                                                    <div className="flex items-baseline gap-2 mb-1">
+                                                        <p className="font-bold text-slate-800">{proj.title}</p>
+                                                        {proj.technologies && <span className="text-xs text-slate-500">[{proj.technologies}]</span>}
+                                                    </div>
+                                                    {proj.description && (
+                                                        <p className="text-slate-700 leading-relaxed whitespace-pre-line ml-4">
+                                                            {proj.description.split('\n').filter(b => b.trim()).map((b, i) => (
+                                                                <span key={i} className="block mb-1">• {b.replace(/^•\s*/, '')}</span>
+                                                            ))}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                {proj.description && (
-                                                    <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line ml-4 border-l-2 border-slate-200 pl-3">
-                                                        {proj.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

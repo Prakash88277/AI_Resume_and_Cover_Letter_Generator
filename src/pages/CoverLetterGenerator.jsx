@@ -15,6 +15,7 @@ import {
 
 const CoverLetterGenerator = () => {
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [generatedLetter, setGeneratedLetter] = useState('');
 
     // Form State
@@ -38,23 +39,86 @@ const CoverLetterGenerator = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleGenerate = (e) => {
-        e.preventDefault();
-        setIsGenerating(true);
+    const [errorMsg, setErrorMsg] = useState('');
 
-        // Mock API call to simulate AI generation
-        setTimeout(() => {
-            const date = new Date().toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
+    const handleGenerate = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        setIsGenerating(true);
+        setErrorMsg('');
+        try {
+            const response = await fetch('http://localhost:8000/api/cover-letter/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    full_name: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    linkedin: formData.linkedin,
+                    job_title: formData.jobTitle,
+                    company_name: formData.companyName,
+                    company_location: formData.companyLocation,
+                    job_description: formData.jobDescription,
+                    skills: formData.skills,
+                    experience: formData.experience,
+                    tone: formData.tone,
+                    length: formData.length,
+                }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Server error');
+            }
+            const data = await response.json();
+            setGeneratedLetter(data.generated_letter);
+        } catch (err) {
+            setErrorMsg(`Failed to generate cover letter: ${err.message}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        setIsDownloading(true);
+        setErrorMsg('');
+        try {
+            const response = await fetch('http://localhost:8000/api/cover-letter/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    full_name: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    linkedin: formData.linkedin,
+                    job_title: formData.jobTitle,
+                    company_name: formData.companyName,
+                    company_location: formData.companyLocation,
+                    job_description: formData.jobDescription,
+                    skills: formData.skills,
+                    experience: formData.experience,
+                    tone: formData.tone,
+                    length: formData.length,
+                }),
             });
 
-            const template = `${date}\n\nHiring Manager\n${formData.companyName || '[Company Name]'}\n${formData.companyLocation || '[Company Location]'}\n\nDear Hiring Manager,\n\nI am writing to express my strong interest in the ${formData.jobTitle || '[Job Title]'} position at ${formData.companyName || '[Company Name]'}. With a proven track record described in my experience: "${formData.experience || 'Working in similar roles'}", and my expertise in ${formData.skills || '[Key Skills]'}, I am confident in my ability to make an immediate impact on your team.\n\nYour organization’s background aligns perfectly with my professional goals and values. The requirements outlined in the job description present exactly the kind of challenges I excel at solving. I thrive in dynamic environments and am eager to bring my confident, ${formData.tone.toLowerCase()} approach to ${formData.companyName || '[Company Name]'}.\n\nI would welcome the opportunity to discuss how my background, skills, and certifications will be beneficial to your organization. Thank you for your time and consideration. I look forward to hearing from you soon.\n\nSincerely,\n\n${formData.fullName || '[Your Name]'}\n${formData.email || ''}\n${formData.phone || ''}`;
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Server error');
+            }
 
-            setGeneratedLetter(template);
-            setIsGenerating(false);
-        }, 2000);
+            const blob = await response.blob();
+            const fileUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = `CoverLetter_${formData.fullName.replace(/\s+/g, '_') || 'Generated'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            setErrorMsg(`Failed to download PDF: ${err.message}`);
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     return (
@@ -65,6 +129,12 @@ const CoverLetterGenerator = () => {
                     Generate customized, job-specific cover letters powered by AI.
                 </p>
             </div>
+
+            {errorMsg && (
+                <div className="max-w-7xl mx-auto px-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    ⚠️ {errorMsg}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Side: Input Form */}
@@ -220,9 +290,20 @@ const CoverLetterGenerator = () => {
                                     <Copy className="w-4 h-4" />
                                     Copy
                                 </button>
-                                <button className="flex-1 py-2 px-4 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                                    <Download className="w-4 h-4" />
-                                    PDF
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    disabled={!generatedLetter || isDownloading}
+                                    className={`flex-1 py-2 px-4 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 font-medium ${(!generatedLetter || isDownloading) ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200' : 'bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700'}`}
+                                >
+                                    {isDownloading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" /> Fetching
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Download className="w-4 h-4" /> PDF
+                                        </>
+                                    )}
                                 </button>
                                 <button onClick={handleGenerate} className="flex-1 py-2 px-4 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
                                     <RefreshCcw className="w-4 h-4" />

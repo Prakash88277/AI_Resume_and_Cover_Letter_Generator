@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resume - {{ personal_info.fullName }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #333333;
+            line-height: 1.4;
+            font-size: 11pt;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222222;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 26pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #111111;
+            margin: 0 0 5px 0;
+        }
+        .contact-info {
+            font-size: 10pt;
+            color: #555555;
+        }
+        .contact-info span {
+            margin: 0 5px;
+        }
+        .section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #111111;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #cccccc;
+            padding-bottom: 4px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .item-row {
+            margin-bottom: 10px;
+        }
+        .item-header {
+            width: 100%;
+            margin-bottom: 3px;
+        }
+        .item-title {
+            font-weight: bold;
+            color: #222222;
+        }
+        .item-subtitle {
+            font-style: italic;
+            color: #555555;
+        }
+        .item-date {
+            float: right;
+            font-weight: bold;
+            color: #444444;
+            text-align: right;
+        }
+        .item-cgpa {
+            float: right;
+            clear: right;
+            text-align: right;
+            font-size: 10pt;
+            color: #666666;
+        }
+        .skills-list {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+        .bullet-list {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+        }
+        .bullet-list li {
+            margin-bottom: 3px;
+            text-align: justify;
+        }
+        .tech-tags {
+            font-size: 9pt;
+            color: #666666;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>{{ personal_info.fullName|default('Your Name', true) }}</h1>
+        <div class="contact-info">
+            {% if personal_info.email %}
+                <span>{{ personal_info.email }}</span>
+            {% endif %}
+            
+            {% if personal_info.phone %}
+                {% if personal_info.email %}<span>|</span>{% endif %}
+                <span>{{ personal_info.phone }}</span>
+            {% endif %}
+            
+            {% if personal_info.linkedin %}
+                {% if personal_info.email or personal_info.phone %}<span>|</span>{% endif %}
+                <span>{{ personal_info.linkedin }}</span>
+            {% endif %}
+            
+            {% if personal_info.github %}
+                {% if personal_info.email or personal_info.phone or personal_info.linkedin %}<span>|</span>{% endif %}
+                <span>{{ personal_info.github }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- EDUCATION -->
+    {% if education.degree or education.university %}
+    <div class="section">
+        <div class="section-title">Education</div>
+        <div class="item-row">
+            <div class="item-header">
+                <span class="item-title">{{ education.university|default('University Name', true) }}</span>
+                <span class="item-date">{{ education.gradYear }}</span>
+            </div>
+            <div>
+                <span class="item-subtitle">{{ education.degree }}</span>
+                {% if education.cgpa %}
+                <span class="item-cgpa">CGPA: {{ education.cgpa }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SKILLS -->
+    {% if skills %}
+    <div class="section">
+        <div class="section-title">Technical Skills</div>
+        <div class="skills-list">
+            {{ skills }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- EXPERIENCE -->
+    {% if experience %}
+    <div class="section">
+        <div class="section-title">Professional Experience</div>
+        {% for exp in experience %}
+            {% if exp.company or exp.role %}
+            <div class="item-row">
+                <div class="item-header">
+                    <span class="item-title">{{ exp.role|default('Role Title', true) }}</span>
+                    <span class="item-date">{{ exp.duration }}</span>
+                </div>
+                <div class="item-subtitle">{{ exp.company|default('Company Name', true) }}</div>
+                {% if exp.bullets %}
+                <ul class="bullet-list">
+                    {% for bullet in exp.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- PROJECTS -->
+    {% if projects %}
+    <div class="section">
+        <div class="section-title">Projects</div>
+        {% for proj in projects %}
+            {% if proj.title %}
+            <div class="item-row">
+                <div class="item-header">
+                    <span class="item-title">{{ proj.title }}</span>
+                    {% if proj.technologies %}
+                    <span class="tech-tags">[{{ proj.technologies }}]</span>
+                    {% endif %}
+                </div>
+                {% if proj.bullets %}
+                <ul class="bullet-list">
+                    {% for bullet in proj.bullets %}
+                    <li>{{ bullet }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</body>
+</html>
