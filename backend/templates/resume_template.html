@@ -122,22 +122,36 @@
         </div>
     </div>
 
+    <!-- PROFESSIONAL SUMMARY -->
+    {% if professional_summary %}
+    <div class="section" style="margin-top: 10px; margin-bottom: 20px;">
+        <div class="section-title" style="margin-top: 0;">Summary</div>
+        <div style="text-align: justify; color: #444444; line-height: 1.5; font-size: 11pt;">
+            {{ professional_summary }}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- EDUCATION -->
-    {% if education.degree or education.university %}
+    {% if education and education|length > 0 %}
     <div class="section">
         <div class="section-title">Education</div>
-        <div class="item-row">
-            <div class="item-header">
-                <span class="item-title">{{ education.university|default('University Name', true) }}</span>
-                <span class="item-date">{{ education.gradYear }}</span>
+        {% for edu in education %}
+            {% if edu.degree or edu.university %}
+            <div class="item-row">
+                <div class="item-header">
+                    <span class="item-title">{{ edu.university|default('University Name', true) }}</span>
+                    <span class="item-date">{{ edu.gradYear }}</span>
+                </div>
+                <div>
+                    <span class="item-subtitle">{{ edu.degree }}</span>
+                    {% if edu.cgpa %}
+                    <span class="item-cgpa">CGPA: {{ edu.cgpa }}</span>
+                    {% endif %}
+                </div>
             </div>
-            <div>
-                <span class="item-subtitle">{{ education.degree }}</span>
-                {% if education.cgpa %}
-                <span class="item-cgpa">CGPA: {{ education.cgpa }}</span>
-                {% endif %}
-            </div>
-        </div>
+            {% endif %}
+        {% endfor %}
     </div>
     {% endif %}
 
