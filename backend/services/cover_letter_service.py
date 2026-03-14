@@ -4,6 +4,7 @@ No external APIs — pure Python template-based generation.
 """
 
 from datetime import date
+from .gemini_cover_letter_service import generate_cover_letter_body
 
 
 # ── TONE-BASED PHRASES ────────────────────────────────────────────────────────
@@ -165,31 +166,32 @@ def generate_cover_letter_text(data: dict) -> str:
 
 def generate_cover_letter_pdf(data: dict) -> bytes:
     """
-    Generates a professionally styled PDF cover letter.
-    Internally uses generate_cover_letter_text for the content generation.
+    Generates a professionally styled PDF cover letter using Jinja2 templates.
+    Internally calls the HuggingFace `ai_cover_letter_service`.
     """
-    text = generate_cover_letter_text(data)
+    text = generate_cover_letter_body(data)
+
+    # Locate template
+    template_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("cover_letter_template.html")
 
     # Format the text with HTML breaks for exactly matching the preview structure
-    html_paragraphs = "".join([f"<p>{p}</p>" for p in text.split("\n\n")])
+    html_paragraphs = "".join([f"<p style='margin-bottom: 12px;'>{p}</p>" for p in text.split("\n\n") if p.strip()])
 
-    # To maintain consistency, we will reuse the resume template's structure but clear out the body
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @page {{ size: a4 portrait; margin: 2cm; }}
-            body {{ font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #333; line-height: 1.6; }}
-            p {{ margin-bottom: 15px; }}
-        </style>
-    </head>
-    <body>
-        {html_paragraphs}
-    </body>
-    </html>
-    """
+    today = date.today().strftime("%B %d, %Y")
+
+    # Render HTML
+    html_content = template.render(
+        name=data.get("full_name", ""),
+        email=data.get("email", ""),
+        phone=data.get("phone", ""),
+        linkedin=data.get("linkedin", ""),
+        date=today,
+        company_name=data.get("company_name", ""),
+        company_location=data.get("company_location", ""),
+        letter_body=html_paragraphs
+    )
 
     pdf_buffer = BytesIO()
     pisa_status = pisa.CreatePDF(

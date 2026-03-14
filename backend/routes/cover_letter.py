@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from typing import Optional
-from services.cover_letter_service import generate_cover_letter_text, generate_cover_letter_pdf
+from services.gemini_cover_letter_service import generate_cover_letter
+from services.cover_letter_service import generate_cover_letter_pdf
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ def generate_cover_letter_preview(payload: CoverLetterRequest):
     """Generate a 4-paragraph cover letter formatted as text for previewing."""
     try:
         data = payload.model_dump()
-        preview_text = generate_cover_letter_text(data)
+        preview_text = generate_cover_letter(data)
         return {"generated_letter": preview_text}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
