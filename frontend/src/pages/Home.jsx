@@ -56,17 +56,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Decorative / Info Section */}
-            <div className="mt-20 text-center">
-                <p className="text-sm font-medium text-slate-400 tracking-wider uppercase mb-4">Trusted by students & job seekers</p>
-                <div className="flex flex-wrap justify-center gap-8 opacity-40 grayscale">
-                    {/* Mock company logos or text could go here, for now just decorative dots/badges */}
-                    <div className="h-8 md:h-10 text-xl font-bold text-slate-300">Google</div>
-                    <div className="h-8 md:h-10 text-xl font-bold text-slate-300">Microsoft</div>
-                    <div className="h-8 md:h-10 text-xl font-bold text-slate-300">Amazon</div>
-                    <div className="h-8 md:h-10 text-xl font-bold text-slate-300">Meta</div>
-                </div>
-            </div>
         </div>
     );
 };

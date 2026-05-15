@@ -8,7 +8,7 @@ echo Starting Backend (FastAPI)...
 start "Backend Server" cmd /k "cd backend && if not exist .venv (python -m venv .venv && call .venv\Scripts\activate && pip install -r requirements.txt) else (call .venv\Scripts\activate) && python -m uvicorn main:app --reload"
 
 echo Starting Frontend (React / Vite)...
-start "Frontend Server" cmd /k "if not exist node_modules (npm install && npm run dev) else (npm run dev)"
+start "Frontend Server" cmd /k "cd frontend && if not exist node_modules (npm install && npm run dev) else (npm run dev)"
 
 echo.
 echo Both servers are starting up in separate windows!

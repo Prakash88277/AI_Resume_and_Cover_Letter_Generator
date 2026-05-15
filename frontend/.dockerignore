@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+README.md
+backend
+run_app.bat
