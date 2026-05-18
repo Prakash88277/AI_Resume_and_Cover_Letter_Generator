@@ -40,6 +40,25 @@ const CoverLetterGenerator = () => {
     };
 
     const [errorMsg, setErrorMsg] = useState('');
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(generatedLetter);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = generatedLetter;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const handleGenerate = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -286,9 +305,9 @@ const CoverLetterGenerator = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-3 mt-6">
-                                <button className="flex-1 py-2 px-4 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2" onClick={() => navigator.clipboard.writeText(generatedLetter)}>
+                                <button className="flex-1 py-2 px-4 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2" onClick={handleCopy}>
                                     <Copy className="w-4 h-4" />
-                                    Copy
+                                    {copied ? 'Copied!' : 'Copy'}
                                 </button>
                                 <button
                                     onClick={handleDownloadPDF}
