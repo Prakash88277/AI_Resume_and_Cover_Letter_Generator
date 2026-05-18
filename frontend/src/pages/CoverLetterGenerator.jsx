@@ -46,7 +46,7 @@ const CoverLetterGenerator = () => {
         setIsGenerating(true);
         setErrorMsg('');
         try {
-            const response = await fetch('http://localhost:8000/api/cover-letter/preview', {
+            const response = await fetch('/api/cover-letter/preview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -81,7 +81,7 @@ const CoverLetterGenerator = () => {
         setIsDownloading(true);
         setErrorMsg('');
         try {
-            const response = await fetch('http://localhost:8000/api/cover-letter/download', {
+            const response = await fetch('/api/cover-letter/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

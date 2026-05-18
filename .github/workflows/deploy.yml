@@ -1,0 +1,33 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into EC2 and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/AI_Resume_and_Cover_Letter_Generator
+
+            # Pull latest code from master
+            git pull origin main
+
+            # Write the latest env file
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > backend/.env
+
+            # Rebuild and restart containers
+            docker-compose up --build -d
+
+            # Remove unused images to save disk space
+            docker image prune -f

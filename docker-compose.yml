@@ -1,29 +1,39 @@
 version: '3.8'
 
 services:
+  backend:
+    image: ai-resume-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-network
+
   frontend:
-    image: ai-resume-and-coverletter-generator-frontend
+    image: ai-resume-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+      - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
 
-  backend:
-    image: ai-resume-and-coverletter-generator-backend
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    env_file:
-      - ./backend/.env
+networks:
+  app-network:
+    driver: bridge

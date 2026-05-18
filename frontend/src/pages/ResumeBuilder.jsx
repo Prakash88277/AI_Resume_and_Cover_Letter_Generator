@@ -55,7 +55,7 @@ const ResumeBuilder = () => {
         setIsGenerating(true);
         setErrorMsg('');
         try {
-            const response = await fetch('http://localhost:8000/api/resume/preview', {
+            const response = await fetch('/api/resume/preview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -93,7 +93,7 @@ const ResumeBuilder = () => {
         setIsDownloading(true);
         setErrorMsg('');
         try {
-            const response = await fetch('http://localhost:8000/api/resume/download', {
+            const response = await fetch('/api/resume/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

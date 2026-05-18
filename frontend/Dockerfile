@@ -1,18 +1,26 @@
-# Use official Node.js image
-FROM node:22-alpine
+# ── Stage 1: build ────────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci --production=false
 
-# Copy project files
 COPY . .
+RUN npm run build
 
-# Expose port 5173 for Vite dev server
-EXPOSE 5173
+# ── Stage 2: serve ────────────────────────────────────────────────────────────
+FROM nginx:1.27-alpine
 
-# Start the Vite development server bound to all network interfaces
-CMD ["npm", "run", "dev"]
+# Remove default nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built React app
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
